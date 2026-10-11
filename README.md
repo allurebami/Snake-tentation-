@@ -19,7 +19,7 @@ Le manifeste et le service worker permettent l'installation PWA et le mode hors 
 
 ## Commandes
 
-Sur téléphone : glisser le doigt sur le terrain ou déplacer le joystick tactile sous le terrain. Les trois pouvoirs sont accessibles à côté du joystick. Le contrôle ignore les doigts supplémentaires et se réinitialise au relâchement, à l'annulation du geste ou à la reprise après pause. Le terrain et le joystick bloquent le défilement pendant le geste ; le reste de la page reste défilable.
+Sur téléphone : glisser le doigt sur le terrain ou déplacer le joystick tactile sous le terrain. Les trois pouvoirs sont accessibles à côté du joystick. L’écran principal contient seulement le terrain, le coffre, le butin, le temps et les commandes. Le menu Réglages regroupe difficulté, couleurs, son, installation et dernières parties ; son ouverture pendant une partie met le jeu en pause, sa fermeture le reprend. Les règles détaillées sont dans le bouton ?. Le contrôle ignore les doigts supplémentaires et se réinitialise au relâchement, à l'annulation du geste ou à la reprise après pause. Le terrain et le joystick bloquent le défilement pendant le geste ; le reste de la page reste défilable.
 
 Sur ordinateur : flèches, ZQSD ou WASD. Espace lorsque le terrain a le focus : colère. P ou Échap : pause. Son facultatif. Pause automatique quand l'onglet devient invisible.
 

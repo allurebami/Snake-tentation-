@@ -16,39 +16,32 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function tone(freq=440,length=.08){if(!saved.sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.055,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+length);}catch{}}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2800);}
 function stats(){
-  $('bank').textContent=game.bank;$('wallet').textContent=game.wallet;$('weight').textContent=`serpent · ${game.snake.length} cases`;
+  $('bank').textContent=game.bank;$('wallet').textContent=game.wallet;
   const seconds=Math.ceil(Math.max(0,game.duration-game.elapsed)/1000);$('time').textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
   $('time').style.color=seconds<=15?'#e78f7b':'';
   const playing=game.status==='playing';$('pause').disabled=!playing&&game.status!=='paused';$('pause').textContent=game.status==='paused'?'▶':'Ⅱ';$('pause').setAttribute('aria-label',game.status==='paused'?'Reprendre la partie':'Mettre en pause');
-  $('greed').disabled=!playing;$('greed').setAttribute('aria-pressed',String(game.greed));$('greed-state').textContent=game.greed?'ACTIF':'ACTIVER';
-  $('greed-touch').disabled=!playing;$('greed-touch').setAttribute('aria-pressed',String(game.greed));$('greed-touch').textContent=game.greed?'◆ Avarice active':'◆ Avarice ×2';
-  $('pride').disabled=!playing||!!game.pride||game.prideCooldown>0;$('pride').classList.toggle('active',!!game.pride);$('pride-state').textContent=game.pride?'EN COURS':game.prideCooldown>0?`${Math.ceil(game.prideCooldown/1000)} S`:'DÉFI';
-  $('pride-progress').hidden=!game.pride;if(game.pride){$('pride-label').textContent=`${game.pride.count} / 8 trésors · ${Math.ceil(game.pride.remaining/1000)} s`;$('pride-bar').style.width=`${game.pride.count/8*100}%`;}
-  $('pride-touch').disabled=$('pride').disabled;$('pride-touch').textContent=game.pride?`♛ ${game.pride.count}/8 · ${Math.ceil(game.pride.remaining/1000)} s`:game.prideCooldown>0?`♛ ${Math.ceil(game.prideCooldown/1000)} s`:'♛ Défi orgueil';
-  const rageDisabled=!playing||game.cooldown>0;$('rage').disabled=rageDisabled;$('rage-mobile').disabled=rageDisabled;$('rage').classList.toggle('active',game.rage>0);$('rage-state').textContent=game.rage>0?`${Math.ceil(game.rage/1000)} S ACTIF`:game.cooldown>0?`${Math.ceil(game.cooldown/1000)} S`:'ESPACE';
-  $('rage-mobile').firstChild.textContent=game.rage>0?'⚡ Colère active':game.cooldown>0?`⚡ ${Math.ceil(game.cooldown/1000)} s`:'⚡ Colère';
-  const goals=[['goal-bank',game.bank,50,'pts'],['goal-deposit',game.deposits,3,''],['goal-pride',game.prideWins,1,'défi']];
-  goals.forEach(([id,value,target,label])=>{$(id).textContent=`${Math.min(value,target)} / ${target} ${label}`;$(id).parentElement.parentElement.classList.toggle('complete',value>=target);});
+  $('greed').disabled=!playing;$('greed').setAttribute('aria-pressed',String(game.greed));$('greed-state').textContent=game.greed?'Actif ×2':'Gains ×2';
+  $('pride').disabled=!playing||!!game.pride||game.prideCooldown>0;$('pride').classList.toggle('active',!!game.pride);$('pride-state').textContent=game.pride?`${game.pride.count}/8 · ${Math.ceil(game.pride.remaining/1000)} s`:game.prideCooldown>0?`${Math.ceil(game.prideCooldown/1000)} s`:'Défi +80';
+  $('rage').disabled=!playing||game.cooldown>0;$('rage').classList.toggle('active',game.rage>0);$('rage-state').textContent=game.rage>0?`Actif · ${Math.ceil(game.rage/1000)} s`:game.cooldown>0?`${Math.ceil(game.cooldown/1000)} s`:'Brise les rochers';
   document.querySelectorAll('[data-mode]').forEach(b=>{b.disabled=playing||game.status==='paused';b.classList.toggle('selected',b.dataset.mode===mode);b.setAttribute('aria-pressed',String(b.dataset.mode===mode));});
   document.querySelectorAll('[data-skin]').forEach(b=>{b.classList.toggle('locked',saved.total<requirements[b.dataset.skin]);b.classList.toggle('selected',saved.skin===b.dataset.skin);b.setAttribute('aria-pressed',String(saved.skin===b.dataset.skin));});
   $('all-best').textContent=saved.best;$('total-label').textContent=`${saved.total.toLocaleString('fr-FR')} PTS`;
-  const next=saved.total<250?250:1000;$('skin-progress').style.width=`${Math.min(100,saved.total/next*100)}%`;
+  const next=saved.total<250?250:1000;
   $('unlock-label').textContent=saved.total>=1000?'Toutes les couleurs sont débloquées.':`Encore ${next-saved.total} points déposés pour ${next===250?'Ambre':'Glace'}.`;
-  $('sound').setAttribute('aria-pressed',String(saved.sound));$('sound').setAttribute('aria-label',saved.sound?'Couper le son':'Activer le son');
+  $('sound').textContent=saved.sound?'Son : activé':'Son : désactivé';$('sound').setAttribute('aria-pressed',String(saved.sound));$('sound').setAttribute('aria-label',saved.sound?'Couper le son':'Activer le son');
 }
 function records(){const ol=$('records');ol.replaceChildren();if(!saved.records.length){const li=document.createElement('li');li.textContent='Ton histoire commence avec une première partie.';ol.append(li);}else saved.records.forEach((r,i)=>{const li=document.createElement('li'),span=document.createElement('span'),strong=document.createElement('strong');span.textContent=`${String(i+1).padStart(2,'0')} · ${SnakeEngine.MODES[r.mode].name}`;strong.textContent=`${r.score} pts`;li.append(span,strong);ol.append(li);});}
 function showStart(){
-  $('overlay').hidden=false;$('overlay-content').innerHTML='<div class="sigil"><span>◇</span></div><p class="eyebrow">LES 7 TENTATIONS / ÉDITION 01</p><h2>Le risque a<br>un goût d’or.</h2><p>Récolte les trésors. Traverse le coffre pour les sécuriser. Chaque tentation peut tout changer.</p><button class="primary" id="start">Entrer dans l’arène →</button><small>2 minutes · Flèches ou commandes tactiles<br>Ton score compte uniquement les points déposés.</small>';
+  $('overlay').hidden=false;$('overlay-content').innerHTML='<h2>Prêt à tenter ?</h2><p>Récolte les diamants.<br>Reviens au coffre pour garder tes points.</p><button class="primary" id="start">Jouer</button><small>2 minutes · '+{easy:'Facile',normal:'Moyen',hard:'Difficile'}[mode]+'</small>';
   $('start').addEventListener('click',start);
-  if(touchDevice)$('overlay-content').querySelector('small').innerHTML='Glisse le doigt sur le terrain ou utilise le joystick.<br>Ton score compte uniquement les points déposés.';
 }
-function start(){runBestAtStart=saved.best;game=new SnakeEngine.Game(mode);game.start();acc=0;last=0;particles=[];swipeControls.reset();joystickControls.reset();$('overlay').hidden=true;$('state-caption').textContent=touchDevice?'Glisse le doigt ou dirige le joystick. Reviens au coffre doré.':'Le coffre doré, en haut du terrain, sécurise ton butin.';canvas.focus({preventScroll:true});if(touchDevice)document.querySelector('.arena-section').scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'});tone(440);stats();}
-function pause(){if(game.status==='playing'){game.pause();$('overlay').hidden=false;$('overlay-content').innerHTML='<div class="sigil"><span>Ⅱ</span></div><p class="eyebrow">UN MOMENT POUR RESPIRER</p><h2>Partie en pause.</h2><p>Ton serpent, tes pouvoirs et le temps t’attendent.</p><button id="resume" class="primary">Reprendre →</button><br><button id="quit" class="secondary">Terminer cette partie</button>';$('resume').onclick=resume;$('quit').onclick=()=>{game.finish('quit');processEvents();stats();};stats();}else if(game.status==='paused')resume();}
+function start(){runBestAtStart=saved.best;game=new SnakeEngine.Game(mode);game.start();acc=0;last=0;particles=[];swipeControls.reset();joystickControls.reset();$('overlay').hidden=true;canvas.focus({preventScroll:true});tone(440);stats();}
+function pause(){if(game.status==='playing'){game.pause();swipeControls.reset();joystickControls.reset();$('overlay').hidden=false;$('overlay-content').innerHTML='<h2>Pause</h2><button id="resume" class="primary">Reprendre</button><br><button id="quit" class="secondary">Terminer la partie</button>';$('resume').onclick=resume;$('quit').onclick=()=>{game.finish('quit');processEvents();stats();};stats();}else if(game.status==='paused')resume();}
 function resume(){game.resume();acc=0;last=0;swipeControls.reset();joystickControls.reset();$('overlay').hidden=true;canvas.focus({preventScroll:true});stats();}
 function end(){
   const newRecord=game.bank>runBestAtStart;saved.best=Math.max(saved.best,game.bank);saved.records.unshift({score:game.bank,mode:game.mode});saved.records=saved.records.slice(0,5);persist();records();
   const reasons={wall:'Le mur a eu le dernier mot.',body:'Ton serpent a croisé son propre chemin.',rock:'Un obstacle a arrêté ta course.',time:'Les deux minutes sont écoulées.',quit:'Tu as terminé la partie.'};
-  $('overlay').hidden=false;$('overlay-content').innerHTML=`<p class="eyebrow">${newRecord?'NOUVEAU RECORD LOCAL':'FIN DE PARTIE'}</p><h2>${newRecord?'Bien joué.':'Le coffre se souvient.'}</h2><p>${reasons[game.reason]||'La partie est terminée.'}</p><div class="result-stats"><div><strong>${game.bank}</strong><small>POINTS SÉCURISÉS</small></div><div><strong>${game.lost}</strong><small>BUTIN PERDU</small></div></div><button id="restart" class="primary">Nouvelle partie →</button><small>${game.deposits} dépôt${game.deposits>1?'s':''} · ${game.collected} trésors récoltés<br>${storageAvailable?'Ta progression est sauvegardée sur cet appareil.':'La sauvegarde locale est indisponible dans ce navigateur.'}</small>`;$('restart').onclick=start;$('state-caption').textContent='Prends le temps de choisir ton prochain défi.';tone(160,.25);stats();
+  $('overlay').hidden=false;$('overlay-content').innerHTML=`<h2>${newRecord?'Nouveau record !':'Partie terminée'}</h2><p>${reasons[game.reason]||'La partie est terminée.'}</p><div class="result-stats"><div><strong>${game.bank}</strong><small>AU COFFRE</small></div><div><strong>${game.lost}</strong><small>PERDU</small></div></div><button id="restart" class="primary">Rejouer</button><small>${game.deposits} dépôt${game.deposits>1?'s':''} · ${game.collected} trésors récoltés<br>${storageAvailable?'Ta progression est sauvegardée sur cet appareil.':'La sauvegarde locale est indisponible dans ce navigateur.'}</small>`;$('restart').onclick=start;tone(160,.25);stats();
 }
 function burst(at,color){if(reduced||!at)return;for(let i=0;i<12;i++){const a=Math.random()*Math.PI*2;particles.push({x:(at.x+.5)*30,y:(at.y+.5)*30,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.5,life:1,color});}}
 function processEvents(){game.drain().forEach(e=>{if(e.type==='coin'){tone(600+Math.min(game.collected,15)*15);burst(e.at,'#e5c487');}if(e.type==='deposit'){saved.total+=e.value;saved.best=Math.max(saved.best,game.bank);persist();toast(`Coffre +${e.value} · Butin sécurisé`);burst(e.at,'#a7edab');tone(950,.16);}if(e.type==='greed')toast(e.on?'Avarice : gains ×2, croissance ×2.':'Avarice désactivée.');if(e.type==='rage'){toast('Colère : 3 secondes pour traverser les obstacles.');tone(220,.12);}if(e.type==='break')burst(e.at,'#e78f7b');if(e.type==='pride')toast('Orgueil : 8 trésors en 25 s. Évite le coffre !');if(e.type==='prideWin'){toast('Défi réussi : +80 à déposer au coffre.');tone(1050,.2);}if(e.type==='prideFail')toast(e.reason==='deposit'?'Dépôt effectué : défi interrompu.':'Défi expiré. Ton butin reste à risque.');if(e.type==='over')end();});}
@@ -72,7 +65,7 @@ function frame(now){
   draw(now);requestAnimationFrame(frame);
 }
 const keys={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],z:[0,-1],s:[0,1],a:[-1,0],q:[-1,0],d:[1,0]};
-document.addEventListener('keydown',e=>{if($('help-dialog').open)return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(keys[k]&&game.status==='playing'){e.preventDefault();game.turn(...keys[k]);}if((k==='p'||k==='Escape')&&(game.status==='playing'||game.status==='paused')){e.preventDefault();pause();}if(e.code==='Space'&&game.status==='playing'&&e.target===canvas){e.preventDefault();game.activateRage();processEvents();stats();}});
+document.addEventListener('keydown',e=>{if($('help-dialog').open||$('settings-dialog').open)return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(keys[k]&&game.status==='playing'){e.preventDefault();game.turn(...keys[k]);}if((k==='p'||k==='Escape')&&(game.status==='playing'||game.status==='paused')){e.preventDefault();pause();}if(e.code==='Space'&&game.status==='playing'&&e.target===canvas){e.preventDefault();game.activateRage();processEvents();stats();}});
 const touchOptions={active:()=>game.status==='playing',onDirection:(x,y)=>game.turn(x,y)};
 const swipeControls=SnakeTouch.attach(canvas,touchOptions);
 const joystickControls=SnakeTouch.attach($('joystick'),{...touchOptions,joystick:true,onPosition:(x,y,held)=>{
@@ -80,13 +73,19 @@ const joystickControls=SnakeTouch.attach($('joystick'),{...touchOptions,joystick
   $('joystick').classList.toggle('held',held);
 }});
 $('pause').onclick=pause;$('greed').onclick=()=>{game.toggleGreed();processEvents();stats();};$('pride').onclick=()=>{game.challenge();processEvents();stats();};
-$('greed-touch').onclick=$('greed').onclick;$('pride-touch').onclick=$('pride').onclick;
-function rage(){game.activateRage();processEvents();stats();canvas.focus({preventScroll:true});}$('rage').onclick=rage;$('rage-mobile').onclick=rage;
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(game.status==='playing'||game.status==='paused')return;mode=b.dataset.mode;game=new SnakeEngine.Game(mode);$('mode-note').textContent={easy:'Prends tes repères. Les murs restent dangereux.',normal:'Un peu plus vite. Un peu plus risqué.',hard:'Vitesse élevée. Le coffre est ton meilleur allié.'}[mode];showStart();stats();});
+function rage(){game.activateRage();processEvents();stats();canvas.focus({preventScroll:true});}$('rage').onclick=rage;
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(game.status==='playing'||game.status==='paused')return;mode=b.dataset.mode;game=new SnakeEngine.Game(mode);$('mode-note').textContent={easy:'Sans rochers. Vitesse lente.',normal:'12 obstacles. Vitesse normale.',hard:'22 obstacles. Vitesse élevée.'}[mode];showStart();stats();});
 document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{const skin=b.dataset.skin;if(saved.total<requirements[skin]){toast(`Encore ${requirements[skin]-saved.total} points à déposer pour cette couleur.`);return;}saved.skin=skin;persist();stats();});
 $('sound').onclick=()=>{saved.sound=!saved.sound;persist();tone(550,.1);stats();};
-let resumeAfterHelp=false;$('help').onclick=()=>{resumeAfterHelp=game.status==='playing';if(resumeAfterHelp)pause();$('help-dialog').showModal();};
-function closeHelp(){$('help-dialog').close();} $('close-help').onclick=closeHelp;$('help-ok').onclick=closeHelp;$('help-dialog').addEventListener('close',()=>{if(resumeAfterHelp&&game.status==='paused')resume();resumeAfterHelp=false;});
+function bindDialog(trigger,id,close,ok){
+  const dialog=$(id);let resumeOnClose=false;
+  $(trigger).onclick=()=>{resumeOnClose=game.status==='playing';if(resumeOnClose)pause();dialog.showModal();};
+  $(close).onclick=$(ok).onclick=()=>dialog.close();
+  dialog.addEventListener('close',()=>{if(resumeOnClose&&game.status==='paused'&&!document.hidden)resume();resumeOnClose=false;});
+}
+bindDialog('help','help-dialog','close-help','help-ok');
+bindDialog('settings','settings-dialog','close-settings','settings-ok');
+$('control-hint').textContent=touchDevice?'Glisse sur le terrain ou le joystick.':'Flèches / ZQSD · P : pause';
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&game.status==='playing')pause();});
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('install').hidden=false;});$('install').onclick=async()=>{if(!installPrompt)return;await installPrompt.prompt();installPrompt=null;$('install').hidden=true;};window.addEventListener('appinstalled',()=>{$('install').hidden=true;installPrompt=null;});
 if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
