@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101712"><meta name="description" content="Snake — Les 7 Tentations. Récolte des trésors, sécurise ton butin au coffre et maîtrise l’avarice, l’orgueil et la colère.">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css"><title>Snake — Les 7 Tentations</title>
+</head>
+<body>
+<div class="app">
+  <header class="masthead">
+    <a href="./" class="brand" aria-label="Snake, accueil"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M11 12h20a7 7 0 0 1 0 14H14a5 5 0 0 0 0 10h15" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="13" cy="12" r="5" fill="currentColor"/><circle cx="12" cy="11" r="1.3" fill="#101712"/></svg><span>SNAKE<span class="brand-sub">LES 7 TENTATIONS</span></span></a>
+    <div class="header-actions"><span class="edition">ÉDITION 01</span><button id="sound" class="icon-button" aria-label="Activer le son" aria-pressed="false">♪</button><button id="help" class="icon-button" aria-label="Règles du jeu">?</button><button id="install" class="small-button" hidden>Installer</button></div>
+  </header>
+  <div class="headline"><div><p class="eyebrow"><span></span> UNE PARTIE. DES CHOIX. DES CONSÉQUENCES.</p><h1>Combien oses-tu <em>garder ?</em></h1><p class="subtitle">Le trésor attire. Le coffre protège. À toi de choisir.</p></div><div class="best-summary"><span>TON RECORD LOCAL</span><strong id="all-best">0</strong><small>points sécurisés</small></div></div>
+  <main class="layout">
+    <section class="arena-section" aria-label="Partie de Snake">
+      <div class="scoreboard"><div><span>SÉCURISÉ</span><strong id="bank">0</strong><small>dans le coffre</small></div><div class="wallet"><span>BUTIN À RISQUE</span><strong id="wallet">0</strong><small id="weight">serpent · 4 cases</small></div><div class="time"><span>TEMPS</span><strong id="time">2:00</strong><button id="pause" aria-label="Mettre en pause" disabled>Ⅱ</button></div></div>
+      <div class="board-wrap" id="board-wrap">
+        <canvas id="board" width="720" height="720" tabindex="0" aria-label="Terrain de Snake. Utilise les flèches ou glisse le doigt pour diriger le serpent."></canvas>
+        <div class="board-label"><span><i class="dot green"></i> TON SERPENT</span><span><i class="dot gold"></i> TRÉSOR</span><span><i class="dot chest-dot"></i> COFFRE</span></div>
+        <div class="overlay" id="overlay"><div class="start-card" id="overlay-content"></div></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      </div>
+      <div class="underboard"><span id="state-caption">Dépose ton butin avant de tout risquer.</span><span class="keyboard-hint">↑ ↓ ← → <span>ou glisser</span></span></div>
+      <div class="mobile-controls" aria-label="Commandes tactiles"><div class="dpad"><button data-dir="0,-1" class="up" aria-label="Monter">↑</button><button data-dir="-1,0" class="left" aria-label="Aller à gauche">←</button><button data-dir="0,1" class="down" aria-label="Descendre">↓</button><button data-dir="1,0" class="right" aria-label="Aller à droite">→</button></div><button id="rage-mobile" class="rage-mobile">⚡ Colère<small>Traverser les obstacles</small></button></div>
+      <div class="run-goals"><div><span class="goal-number">01</span><span>Premier dépôt<strong id="goal-bank">0 / 50 pts</strong></span></div><div><span class="goal-number">02</span><span>Trois retours au coffre<strong id="goal-deposit">0 / 3</strong></span></div><div><span class="goal-number">03</span><span>Maîtriser l’orgueil<strong id="goal-pride">0 / 1 défi</strong></span></div></div>
+    </section>
+    <aside class="sidebar">
+      <section class="panel difficulty-panel"><div class="section-heading"><h2>Ton terrain</h2><span>02:00 / PARTIE</span></div><div class="modes" role="group" aria-label="Difficulté"><button data-mode="easy">Initiation<small>Sans obstacles</small></button><button data-mode="normal" class="selected" aria-pressed="true">Audace<small>12 obstacles</small></button><button data-mode="hard">Vertige<small>22 obstacles</small></button></div><p id="mode-note">Un peu plus vite. Un peu plus risqué.</p></section>
+      <section class="panel temptation-panel"><div class="section-heading"><h2>Les tentations</h2><span>3 / 7</span></div><p class="panel-intro">Un avantage. Toujours un prix.</p>
+        <button id="greed" class="temptation greed" aria-pressed="false" disabled><span class="temptation-icon">◆</span><span class="temptation-copy"><strong>Avarice <span id="greed-state">ACTIVER</span></strong><span>Trésors ×2. Croissance ×2.</span><small>Ton butin ralentit le serpent.</small></span><span class="switch" aria-hidden="true"></span></button>
+        <button id="pride" class="temptation pride" disabled><span class="temptation-icon">♛</span><span class="temptation-copy"><strong>Orgueil <span id="pride-state">DÉFI</span></strong><span>8 trésors en 25 s, sans dépôt.</span><small>+80 points à risque. Vitesse +25 %.</small></span></button>
+        <div id="pride-progress" class="pride-progress" hidden><span id="pride-label"></span><div><i id="pride-bar"></i></div></div>
+        <button id="rage" class="temptation wrath" disabled><span class="temptation-icon">ϟ</span><span class="temptation-copy"><strong>Colère <span id="rage-state">ESPACE</span></strong><span>Brise les obstacles pendant 3 s.</span><small>Accélère. Les murs restent dangereux.</small></span></button>
+        <div class="coming"><span>Les autres tentations</span><p>Envie · Gourmandise · Paresse · Séduction</p><small>Prévues pour une prochaine édition.</small></div>
+      </section>
+      <section class="panel progression-panel"><div class="section-heading"><h2>Ta progression</h2><span id="total-label">0 PTS</span></div><div class="skins" role="group" aria-label="Couleur du serpent"><button data-skin="jade" class="skin selected" aria-label="Serpent Jade"><i style="--skin:#a7edab"></i><span>Jade</span></button><button data-skin="amber" class="skin" aria-label="Serpent Ambre, 250 points cumulés"><i style="--skin:#edc47d"></i><span>Ambre <small>250 pts</small></span></button><button data-skin="ice" class="skin" aria-label="Serpent Glace, 1000 points cumulés"><i style="--skin:#92d9ea"></i><span>Glace <small>1 000 pts</small></span></button></div><div class="progress-track"><i id="skin-progress"></i></div><p id="unlock-label">Dépose 250 points cumulés pour débloquer Ambre.</p></section>
+    </aside>
+  </main>
+  <section class="bottom-row"><div><p class="eyebrow">LA RÈGLE D’OR</p><h2>Ce que tu portes n’est pas encore à toi.</h2><p>Traverse le coffre doré pour sécuriser tes points et raccourcir ton serpent. Une collision ou la fin du temps fait perdre le butin non déposé.</p></div><div class="record-box"><span>DERNIÈRES PARTIES</span><ol id="records"><li>Ton histoire commence avec une première partie.</li></ol><small>Records et couleurs conservés sur cet appareil.</small></div></section>
+  <footer><span>SNAKE / LES 7 TENTATIONS</span><span>Récolter. Résister. Revenir.</span></footer>
+</div>
+<dialog id="help-dialog"><button id="close-help" class="close-dialog" aria-label="Fermer les règles">×</button><p class="eyebrow">AVANT D’ENTRER</p><h2>Le coffre est ton refuge.</h2><p>Dirige ton serpent vers les diamants dorés. Chaque trésor vaut 10 points et agrandit ton serpent.</p><ol><li><strong>Récolte.</strong> Les points transportés restent à risque.</li><li><strong>Dépose.</strong> Traverse l’une des quatre cases du coffre : le butin est sécurisé et ton serpent retrouve quatre cases.</li><li><strong>Choisis.</strong> Active une tentation quand tu veux, en acceptant sa contrepartie.</li></ol><p>Tu disposes de 2 minutes. Les murs, ton corps et les obstacles provoquent une collision. La colère traverse uniquement les obstacles.</p><div class="help-keys">Flèches / ZQSD / WASD : direction<br>Glisser ou boutons : direction sur mobile<br>Espace : colère · P / Échap : pause</div><button id="help-ok" class="primary">Compris</button></dialog>
+<script src="engine.js"></script><script src="app.js"></script>
+</body></html>
