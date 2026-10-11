@@ -1,6 +1,8 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const canvas=$('board'),ctx=canvas.getContext('2d');
+const touchDevice=matchMedia('(any-pointer: coarse)').matches||navigator.maxTouchPoints>0;
+document.body.classList.toggle('touch-device',touchDevice);
 const storageKey='snake-tentations-v1';
 let saved={total:0,best:0,records:[],skin:'jade',sound:false};
 try{const data=JSON.parse(localStorage.getItem(storageKey)||'null');if(data&&typeof data==='object'){saved.total=Math.max(0,Number(data.total)||0);saved.best=Math.max(0,Number(data.best)||0);saved.skin=['jade','amber','ice'].includes(data.skin)?data.skin:'jade';saved.sound=data.sound===true;saved.records=Array.isArray(data.records)?data.records.filter(r=>r&&Number.isFinite(r.score)&&SnakeEngine.MODES[r.mode]).slice(0,5):[];}}catch{}
@@ -19,8 +21,10 @@ function stats(){
   $('time').style.color=seconds<=15?'#e78f7b':'';
   const playing=game.status==='playing';$('pause').disabled=!playing&&game.status!=='paused';$('pause').textContent=game.status==='paused'?'▶':'Ⅱ';$('pause').setAttribute('aria-label',game.status==='paused'?'Reprendre la partie':'Mettre en pause');
   $('greed').disabled=!playing;$('greed').setAttribute('aria-pressed',String(game.greed));$('greed-state').textContent=game.greed?'ACTIF':'ACTIVER';
+  $('greed-touch').disabled=!playing;$('greed-touch').setAttribute('aria-pressed',String(game.greed));$('greed-touch').textContent=game.greed?'◆ Avarice active':'◆ Avarice ×2';
   $('pride').disabled=!playing||!!game.pride||game.prideCooldown>0;$('pride').classList.toggle('active',!!game.pride);$('pride-state').textContent=game.pride?'EN COURS':game.prideCooldown>0?`${Math.ceil(game.prideCooldown/1000)} S`:'DÉFI';
   $('pride-progress').hidden=!game.pride;if(game.pride){$('pride-label').textContent=`${game.pride.count} / 8 trésors · ${Math.ceil(game.pride.remaining/1000)} s`;$('pride-bar').style.width=`${game.pride.count/8*100}%`;}
+  $('pride-touch').disabled=$('pride').disabled;$('pride-touch').textContent=game.pride?`♛ ${game.pride.count}/8 · ${Math.ceil(game.pride.remaining/1000)} s`:game.prideCooldown>0?`♛ ${Math.ceil(game.prideCooldown/1000)} s`:'♛ Défi orgueil';
   const rageDisabled=!playing||game.cooldown>0;$('rage').disabled=rageDisabled;$('rage-mobile').disabled=rageDisabled;$('rage').classList.toggle('active',game.rage>0);$('rage-state').textContent=game.rage>0?`${Math.ceil(game.rage/1000)} S ACTIF`:game.cooldown>0?`${Math.ceil(game.cooldown/1000)} S`:'ESPACE';
   $('rage-mobile').firstChild.textContent=game.rage>0?'⚡ Colère active':game.cooldown>0?`⚡ ${Math.ceil(game.cooldown/1000)} s`:'⚡ Colère';
   const goals=[['goal-bank',game.bank,50,'pts'],['goal-deposit',game.deposits,3,''],['goal-pride',game.prideWins,1,'défi']];
@@ -36,10 +40,11 @@ function records(){const ol=$('records');ol.replaceChildren();if(!saved.records.
 function showStart(){
   $('overlay').hidden=false;$('overlay-content').innerHTML='<div class="sigil"><span>◇</span></div><p class="eyebrow">LES 7 TENTATIONS / ÉDITION 01</p><h2>Le risque a<br>un goût d’or.</h2><p>Récolte les trésors. Traverse le coffre pour les sécuriser. Chaque tentation peut tout changer.</p><button class="primary" id="start">Entrer dans l’arène →</button><small>2 minutes · Flèches ou commandes tactiles<br>Ton score compte uniquement les points déposés.</small>';
   $('start').addEventListener('click',start);
+  if(touchDevice)$('overlay-content').querySelector('small').innerHTML='Glisse le doigt sur le terrain ou utilise le joystick.<br>Ton score compte uniquement les points déposés.';
 }
-function start(){runBestAtStart=saved.best;game=new SnakeEngine.Game(mode);game.start();acc=0;last=0;particles=[];$('overlay').hidden=true;$('state-caption').textContent='Le coffre doré, en haut du terrain, sécurise ton butin.';canvas.focus({preventScroll:true});tone(440);stats();}
+function start(){runBestAtStart=saved.best;game=new SnakeEngine.Game(mode);game.start();acc=0;last=0;particles=[];swipeControls.reset();joystickControls.reset();$('overlay').hidden=true;$('state-caption').textContent=touchDevice?'Glisse le doigt ou dirige le joystick. Reviens au coffre doré.':'Le coffre doré, en haut du terrain, sécurise ton butin.';canvas.focus({preventScroll:true});if(touchDevice)document.querySelector('.arena-section').scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'});tone(440);stats();}
 function pause(){if(game.status==='playing'){game.pause();$('overlay').hidden=false;$('overlay-content').innerHTML='<div class="sigil"><span>Ⅱ</span></div><p class="eyebrow">UN MOMENT POUR RESPIRER</p><h2>Partie en pause.</h2><p>Ton serpent, tes pouvoirs et le temps t’attendent.</p><button id="resume" class="primary">Reprendre →</button><br><button id="quit" class="secondary">Terminer cette partie</button>';$('resume').onclick=resume;$('quit').onclick=()=>{game.finish('quit');processEvents();stats();};stats();}else if(game.status==='paused')resume();}
-function resume(){game.resume();acc=0;last=0;$('overlay').hidden=true;canvas.focus({preventScroll:true});stats();}
+function resume(){game.resume();acc=0;last=0;swipeControls.reset();joystickControls.reset();$('overlay').hidden=true;canvas.focus({preventScroll:true});stats();}
 function end(){
   const newRecord=game.bank>runBestAtStart;saved.best=Math.max(saved.best,game.bank);saved.records.unshift({score:game.bank,mode:game.mode});saved.records=saved.records.slice(0,5);persist();records();
   const reasons={wall:'Le mur a eu le dernier mot.',body:'Ton serpent a croisé son propre chemin.',rock:'Un obstacle a arrêté ta course.',time:'Les deux minutes sont écoulées.',quit:'Tu as terminé la partie.'};
@@ -68,12 +73,14 @@ function frame(now){
 }
 const keys={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],z:[0,-1],s:[0,1],a:[-1,0],q:[-1,0],d:[1,0]};
 document.addEventListener('keydown',e=>{if($('help-dialog').open)return;const k=e.key.length===1?e.key.toLowerCase():e.key;if(keys[k]&&game.status==='playing'){e.preventDefault();game.turn(...keys[k]);}if((k==='p'||k==='Escape')&&(game.status==='playing'||game.status==='paused')){e.preventDefault();pause();}if(e.code==='Space'&&game.status==='playing'&&e.target===canvas){e.preventDefault();game.activateRage();processEvents();stats();}});
-document.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();game.turn(...b.dataset.dir.split(',').map(Number));}));
-let touch=null;
-canvas.addEventListener('pointerdown',e=>{if(game.status!=='playing')return;touch={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(!touch||game.status!=='playing')return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.max(Math.abs(dx),Math.abs(dy))>18){game.turn(...(Math.abs(dx)>Math.abs(dy)?[Math.sign(dx),0]:[0,Math.sign(dy)]));touch={x:e.clientX,y:e.clientY};}});
-canvas.addEventListener('pointerup',()=>touch=null);canvas.addEventListener('pointercancel',()=>touch=null);
+const touchOptions={active:()=>game.status==='playing',onDirection:(x,y)=>game.turn(x,y)};
+const swipeControls=SnakeTouch.attach(canvas,touchOptions);
+const joystickControls=SnakeTouch.attach($('joystick'),{...touchOptions,joystick:true,onPosition:(x,y,held)=>{
+  $('joystick-knob').style.transform=`translate(${x}px, ${y}px)`;
+  $('joystick').classList.toggle('held',held);
+}});
 $('pause').onclick=pause;$('greed').onclick=()=>{game.toggleGreed();processEvents();stats();};$('pride').onclick=()=>{game.challenge();processEvents();stats();};
+$('greed-touch').onclick=$('greed').onclick;$('pride-touch').onclick=$('pride').onclick;
 function rage(){game.activateRage();processEvents();stats();canvas.focus({preventScroll:true});}$('rage').onclick=rage;$('rage-mobile').onclick=rage;
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(game.status==='playing'||game.status==='paused')return;mode=b.dataset.mode;game=new SnakeEngine.Game(mode);$('mode-note').textContent={easy:'Prends tes repères. Les murs restent dangereux.',normal:'Un peu plus vite. Un peu plus risqué.',hard:'Vitesse élevée. Le coffre est ton meilleur allié.'}[mode];showStart();stats();});
 document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{const skin=b.dataset.skin;if(saved.total<requirements[skin]){toast(`Encore ${requirements[skin]-saved.total} points à déposer pour cette couleur.`);return;}saved.skin=skin;persist();stats();});

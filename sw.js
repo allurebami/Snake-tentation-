@@ -1,6 +1,6 @@
 'use strict';
-const CACHE='snake-tentations-v1';
-const ASSETS=['./','./index.html','./style.css','./engine.js','./app.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png'];
+const CACHE='snake-tentations-v2-touch';
+const ASSETS=['./','./index.html','./style.css','./engine.js','./touch.js','./app.js','./manifest.webmanifest','./icon.svg','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>Promise.all(ASSETS.map(async path=>{
   const response=await fetch(new URL(path,self.registration.scope),{cache:'reload'});
   if(!response.ok||response.redirected)throw new Error('Asset not available for offline use');

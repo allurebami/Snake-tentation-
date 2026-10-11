@@ -19,11 +19,13 @@ Le manifeste et le service worker permettent l'installation PWA et le mode hors 
 
 ## Commandes
 
-Flèches, ZQSD, WASD, glisser sur le terrain ou boutons tactiles. Espace lorsque le terrain a le focus : colère. P ou Échap : pause. Son facultatif. Pause automatique quand l'onglet devient invisible.
+Sur téléphone : glisser le doigt sur le terrain ou déplacer le joystick tactile sous le terrain. Les trois pouvoirs sont accessibles à côté du joystick. Le contrôle ignore les doigts supplémentaires et se réinitialise au relâchement, à l'annulation du geste ou à la reprise après pause. Le terrain et le joystick bloquent le défilement pendant le geste ; le reste de la page reste défilable.
+
+Sur ordinateur : flèches, ZQSD ou WASD. Espace lorsque le terrain a le focus : colère. P ou Échap : pause. Son facultatif. Pause automatique quand l'onglet devient invisible.
 
 ## Validation
 
-`node tests/engine.test.cjs` vérifie le score, le dépôt, les collisions, la pause et les effets des tentations. Syntaxe : `node --check app.js`, `node --check engine.js`, `node --check sw.js`.
+`node --test tests/*.test.cjs` vérifie le score, le dépôt, les collisions, la pause, les tentations et la gestion des gestes tactiles. Syntaxe : `node --check app.js`, `node --check engine.js`, `node --check touch.js`, `node --check sw.js`.
 
 Pour une mise à jour, changer le nom de cache dans `sw.js`. Fermer les fenêtres du jeu pour laisser le nouveau service worker s'activer.
 
